@@ -78,4 +78,4 @@ Some important hints and reminders:
 * Use `NSLog` to "talk" to your user in the debugger.
 * For formatting, you can use `\n` in your strings to add line breaks and not have to write multiple `NSLog` statements if you don't want to. But multiple `NSLog` statements will work too!
 
-<a href='https://learn.co/lessons/ios-DeployOnDayOne' data-visibility='hidden'>View this lesson on Learn.co</a>
+<p data-visibility='hidden'>View <a href='https://learn.co/lessons/ios-DeployOnDayOne' title='Deploy on Day One'>Deploy on Day One</a> on Learn.co and start learning to code for free.</p>
