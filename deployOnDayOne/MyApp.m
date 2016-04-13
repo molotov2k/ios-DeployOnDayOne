@@ -18,7 +18,10 @@
 
 -(void)execute
 {
+    // Defining "global" variables
     NSSortDescriptor *asc = [NSSortDescriptor sortDescriptorWithKey:nil ascending:YES];
+    BOOL stop = NO;
+    
     
     // Loading students, questions and answers data
     NSString *savedGroupPath = [NSHomeDirectory() stringByAppendingPathComponent:@"/Development/code/ios-DeployOnDayOne/group.dat"]; // Not perfect, but I don't know how to return directory with lab, working directory is not it
@@ -56,42 +59,77 @@
     if (![group isEqualToArray:savedGroup]) { // Save if new name added
         [NSKeyedArchiver archiveRootObject:group toFile:savedGroupPath];
     }
+    NSLog(@"\n\nWelcome, %@!", currentUser);
     
     
     // Menu
-    NSLog(@"\n\nWelcome, %@!\n\nPlease choose your next step:\n\n1. Be interviewed.\n2. Write a new interview question.\n3. Read interview with another student.\n\nType desired option number and press return.\nType anything else and press return to terminate this app.", currentUser);
-    NSString *menuOption = [self requestKeyboardInput];
-    if ([menuOption isEqualToString:@"1"]) { // answering questions
-        NSLog(@"\n\nYou selected to be interviewed.\n\nWould you like to:\n\n1. Select question you would like to answer.\n2. Answer a random question.\n\nType desired option and press return.");
-        NSString *subMenuOption = [self requestKeyboardInput];
-        if ([subMenuOption isEqualToString:@"1"]) { // select question category
-            NSLog(@"\n\nYou opted to select question to answer.\n\nPlease select question category."); // unfinished
-        }
-        
-    } else if ([menuOption isEqualToString:@"2"]) { // creating new questions
-        NSLog(@"\n\nYou selected to write a new question.\n\nWould you like to:\n\n1. Add question to existing category.\n2. Create new questions category.\n\nType desired option and press return.");
-        NSString *subMenuOption = [self requestKeyboardInput];
-        if ([subMenuOption isEqualToString:@"1"]) { // select existing category
-            // list categories
-        } else { // creating new category
-            NSString *newCategory = @"";
-            while (![self happyCheck:newCategory]) {
-                NSLog(@"\n\nYou opted to create a new category.\n\nType desired category name and press return.");
-                newCategory = [self requestKeyboardInput];
+    while (!stop) {
+        NSLog(@"\n\nDear %@!\n\nPlease choose your next step:\n\n1. Be interviewed.\n2. Write a new interview question.\n3. Read interview with another student.\n4. Exit application.\n\nType desired option number and press return.", currentUser);
+        NSString *menuOption = [self requestKeyboardInput];
+    
+        if ([menuOption isEqualToString:@"1"]) { // answer questions
+            NSLog(@"\n\nYou selected to be interviewed.\n\nWould you like to:\n\n1. Select question you would like to answer.\n2. Answer a random question.\n\nType desired option and press return.");
+            NSString *subMenuOption = [self requestKeyboardInput];
+            
+            if ([subMenuOption isEqualToString:@"1"]) { // select question category
+                NSLog(@"\n\nYou opted to select question to answer. Please select question category.\n\nCurrent categories are: %@\n\nType in desired category name", [[questions allKeys] sortedArrayUsingDescriptors:@[asc]]);
+                NSString *category = [self requestKeyboardInput];
+                while (![[questions allKeys] containsObject:category]) {
+                    NSLog(@"\n\nError! No such category exists. Please enter existing category name.\n\nCurrent categories are: %@", [[questions allKeys] sortedArrayUsingDescriptors:@[asc]]);
+                    category = [self requestKeyboardInput];
+                }
+                NSLog(@"\n\nYou selected category %@. Questions in this cate")
+                
             }
-            if ([[questions allKeys] containsObject:newCategory]) { // new category uniq check
-                NSLog(@"\n\nError. Category already exists!\n\nCurrent categories are: %@", [[questions allKeys] sortedArrayUsingDescriptors:@[asc]]);
-            } else { // new category success
-                questions[newCategory] = [@[] mutableCopy];
+        
+        
+        } else if ([menuOption isEqualToString:@"2"]) { // creating new questions
+            NSLog(@"\n\nYou selected to write a new question.\n\nWould you like to:\n\n1. Add question to existing category.\n2. Create new questions category.\n\nType desired option and press return.");
+            NSString *subMenuOption = [self requestKeyboardInput];
+        
+            if ([subMenuOption isEqualToString:@"1"]) { // select existing category to create question
+                NSLog(@"\n\nYou selected to write a new question for existing category.\n\nCurrent categories are: %@\n\nPlease enter category name to select where to add a new question.", [[questions allKeys] sortedArrayUsingDescriptors:@[asc]]);
+                NSString *category = [self requestKeyboardInput];
+                while (![[questions allKeys] containsObject:category]) {
+                    NSLog(@"\n\nError! No such category exists. Please enter existing category name.\n\nCurrent categories are: %@", [[questions allKeys] sortedArrayUsingDescriptors:@[asc]]);
+                    category = [self requestKeyboardInput];
+                }
+                NSString *newQuestion = @"";
+                while (![self happyCheck:newQuestion]) {
+                    NSLog(@"\n\nEnter question you want to add to category %@ and press return.", [category uppercaseString]);
+                    newQuestion = [self requestKeyboardInput];
+                }
+                [questions[category] addObject:newQuestion];
                 [NSKeyedArchiver archiveRootObject:questions toFile:savedQuestionsPath];
-                NSLog(@"\n\nCategory %@ succesfully created!\n\nCurrent categories are: %@", [newCategory uppercaseString], [[questions allKeys] sortedArrayUsingDescriptors:@[asc]]);
+                NSLog(@"\n\nQuestion successfully added to category %@!\n\nQuestions in category %@ currently include: %@", [category uppercaseString], [category uppercaseString], [questions[category] sortedArrayUsingDescriptors:@[asc]]);
+                stop = [self stopCheck];
+                
+            
+            } else { // create new category to create question
+                NSString *newCategory = @"";
+                while (![self happyCheck:newCategory]) {
+                    NSLog(@"\n\nYou opted to create a new category.\n\nType desired category name and press return.");
+                    newCategory = [self requestKeyboardInput];
+                }
+                if ([[questions allKeys] containsObject:newCategory]) { // new category uniq check
+                    NSLog(@"\n\nError. Category already exists!\n\nCurrent categories are: %@", [[questions allKeys] sortedArrayUsingDescriptors:@[asc]]);
+                } else { // new category success
+                    questions[newCategory] = [@[] mutableCopy];
+                    [NSKeyedArchiver archiveRootObject:questions toFile:savedQuestionsPath];
+                    NSLog(@"\n\nCategory %@ successfully created!\n\nCurrent categories are: %@", [newCategory uppercaseString], [[questions allKeys] sortedArrayUsingDescriptors:@[asc]]);
+                }
+                stop = [self stopCheck];
             }
-        }
-    } else { // reading other's answers
         
+        
+        } else if ([menuOption isEqualToString:@"3"]) { // reading other's answers
+        
+        } else { // quits the app
+            NSLog(@"\n\nThank you for using this app!\n\nWe hope you enjoyed it and coming back soon!\n\nIf you have questions or comments feel free to contact us at molotov2k@gmail.com\n\nCheers!\n\n\nP.S.: Beer donations are highly appreciated!");
+            stop = YES;
+        }
+    
     }
-    
-    
     
 
 
@@ -151,6 +189,28 @@
         return YES;
     }
     return NO;
+}
+
+
+-(BOOL)stopCheck {
+    NSLog(@"\n\nType 1 to return to main menu.\nType anything else to quit app.");
+    NSString *option = [self requestKeyboardInput];
+    if ([option isEqualToString:@"1"]) {
+        return NO;
+    }
+    NSLog(@"\n\nThank you for using this app!\n\nWe hope you enjoyed it and coming back soon!\n\nIf you have questions or comments feel free to contact us at molotov2k@gmail.com\n\nCheers!\n\n\nP.S.: Beer donations are highly appreciated!");
+    return YES;
+}
+
+
+-(NSString *)arrayToFormattedString:(NSArray *)array {
+    NSMutableString *formattedOutput = [[NSMutableString alloc] init];
+    NSSortDescriptor *ascend = [NSSortDescriptor sortDescriptorWithKey:nil ascending:YES];
+    array = [array sortedArrayUsingDescriptors:@[ascend]];
+    for (NSUInteger i = 0; i < [array count]; i++) {
+        [formattedOutput appendFormat:@"\n%lu. %@", i + 1, array[i]];
+    }
+    return formattedOutput;
 }
 
 

@@ -21,4 +21,8 @@
 
 -(BOOL)happyCheck:(NSString *)name;
 
+-(BOOL)stopCheck;
+
+-(NSString *)arrayToFormattedString:(NSArray *)array;
+
 @end
