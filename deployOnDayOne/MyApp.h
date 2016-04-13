@@ -15,4 +15,8 @@
 
 -(void)execute;
 
+-(NSString *)requestKeyboardInput;
+
+-(BOOL)loginCheck:(NSString *)login inGroup:(NSMutableArray *)group;
+
 @end
