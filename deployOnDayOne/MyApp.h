@@ -19,4 +19,6 @@
 
 -(BOOL)loginCheck:(NSString *)login inGroup:(NSMutableArray *)group;
 
+-(BOOL)happyCheck:(NSString *)name;
+
 @end
