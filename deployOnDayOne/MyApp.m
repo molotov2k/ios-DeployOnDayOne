@@ -69,25 +69,25 @@
         NSLog(@"\n\nDear %@!\n\nPlease choose your next step:\n\n1. Be interviewed.\n2. Write a new interview question.\n3. Read interview with another student.\n4. Exit application.\n\nType desired option number and press return.", currentUser);
         NSString *menuOption = [self requestKeyboardInput];
     
-        if ([menuOption isEqualToString:@"1"]) { // answer questions
+        if ([menuOption isEqualToString:@"1"]) { // main category - answer questions
             NSLog(@"\n\nYou selected to be interviewed.\n\nWould you like to:\n\n1. Select question you would like to answer.\n2. Answer a random question.\n\nType desired option and press return.");
             NSString *subMenuOption = [self requestKeyboardInput];
             
-            if ([subMenuOption isEqualToString:@"1"]) { // select question category
+            if ([subMenuOption isEqualToString:@"1"]) { // sub - select question to answer
                 NSLog(@"\n\nYou opted to select question to answer. Please select question category.\n\nCurrent categories are: %@\n\nType in desired category name", numberedCategories);
                 NSString *categoryNumber = [self requestKeyboardInput];
                 while ([categoryNumber integerValue] < 1 || [categoryNumber integerValue] > [questionsCategories count]) {
                     NSLog(@"\n\nError! No such category exists. Please enter existing category name.\n\nCurrent categories are: %@", numberedCategories);
                     categoryNumber = [self requestKeyboardInput];
                 }
-                NSString *category = questionsCategories[[categoryNumber integerValue] - 1]; // select question itself
+                NSString *category = questionsCategories[[categoryNumber integerValue] - 1]; // sub - select question itself
                 NSLog(@"\n\nYou selected category %@. Available questions are: \n%@\n\nType desired question number and press return to answer.\n\nType anything else to return to main menu.", category, [self arrayToFormattedString:questions[category]]);
                 NSString *questionNumber = [self requestKeyboardInput];
                 if ([questionNumber integerValue] > 0 || [questionNumber integerValue] < [questions[category] count]) {
                     questions[category] = [questions[category] sortedArrayUsingDescriptors:@[asc]];
                     NSString *question = questions[category][[questionNumber integerValue] - 1];
                     NSString *answer = @"";
-                    while (![self happyCheck:answer]) { // input answer, chech if user happy
+                    while (![self happyCheck:answer]) { // sub - input answer, chech if user happy
                         NSLog(@"\n\nEnter your answer to question:\n\n%@\n\nPress return to continue.", question);
                         answer = [self requestKeyboardInput];
                     }
@@ -95,10 +95,29 @@
                     [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
                     NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.85!");
                 }
+            } else if ([subMenuOption isEqualToString:@"2"]) { // sub - answer random question
+                NSArray *allQuestions = [[[questions allValues] valueForKeyPath: @"@unionOfArrays.self"] sortedArrayUsingDescriptors:@[asc]];
+                NSUInteger randomizer = arc4random() % [allQuestions count];
+                NSString *question = allQuestions[randomizer];
+                NSString *category = @"";
+                for (NSString *cat in [questions allKeys]) {
+                    if ([questions[cat] containsObject:question]) {
+                        category = cat;
+                    }
+                }
+                // Coded random this way instead of random category then random question inside it so every question has the same chance to appear not being dependent on number of question in category.
+                NSString *answer = @"";
+                while (![self happyCheck:answer]) { // sub - input answer, chech if user happy
+                    NSLog(@"\n\nEnter your answer to question:\n\n%@\n\nPress return to continue.", question);
+                    answer = [self requestKeyboardInput];
+                }
+                answers[currentUser][category][question] = answer;
+                [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
+                NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.85!");
             }
         
         
-        } else if ([menuOption isEqualToString:@"2"]) { // creating new questions
+        } else if ([menuOption isEqualToString:@"2"]) { // main category - create new questions
             NSLog(@"\n\nYou selected to write a new question.\n\nWould you like to:\n\n1. Add question to existing category.\n2. Create new questions category.\n\nType desired option and press return.");
             NSString *subMenuOption = [self requestKeyboardInput];
         
@@ -137,21 +156,16 @@
         
         
         } else if ([menuOption isEqualToString:@"3"]) { // reading other's answers
+            
+            NSLog(@"");
         
         } else if ([menuOption isEqualToString:@"4"]) { // quits the app
-            NSLog(@"\n\nThank you for using this app!\n\nWe hope you enjoyed it and coming back soon!\n\nIf you have questions or comments feel free to contact us at molotov2k@gmail.com\n\nCheers!\n\n\nP.S.: Beer donations are highly appreciated!");
+            NSLog(@"\n\nThank you for using Vault-Tec Interviewer 1980 v0.85!\n\nWe hope you enjoyed it and coming back soon!\n\nIf you have questions or comments feel free to contact us at molotov2k@gmail.com\n\nCheers!\n\n\nP.S.: Beer donations are highly appreciated!");
             stop = YES;
         } else { // reacts to improper command
             NSLog(@"\n\nI'm sorry, but I'm from 80's and I can only understand if you enter 1, 2, 3 or 4.\n\nPlease try again.");
         }
     }
-    
-
-
-    
-    
-    
-    
 }
 
 
