@@ -49,6 +49,8 @@
         savedAnswers = [NSKeyedUnarchiver unarchiveObjectWithData:answersData];
     }
     NSMutableDictionary *answers = [savedAnswers mutableCopy];
+    NSArray *personsInAnswers = [[answers allKeys] sortedArrayUsingDescriptors:@[asc]];
+    
     
     
     // Login
@@ -76,7 +78,7 @@
             if ([subMenuOption isEqualToString:@"1"]) { // sub - select question to answer
                 NSLog(@"\n\nYou opted to select question to answer. Please select question category.\n\nCurrent categories are: %@\n\nType in desired category name", numberedCategories);
                 NSString *categoryNumber = [self requestKeyboardInput];
-                while ([categoryNumber integerValue] < 1 || [categoryNumber integerValue] > [questionsCategories count]) {
+                while ([categoryNumber integerValue] < 1 || [categoryNumber integerValue] >= [questionsCategories count]) {
                     NSLog(@"\n\nError! No such category exists. Please enter existing category name.\n\nCurrent categories are: %@", numberedCategories);
                     categoryNumber = [self requestKeyboardInput];
                 }
@@ -93,7 +95,7 @@
                     }
                     answers[currentUser][category][question] = answer;
                     [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
-                    NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.85!");
+                    NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!");
                 }
             } else if ([subMenuOption isEqualToString:@"2"]) { // sub - answer random question
                 NSArray *allQuestions = [[[questions allValues] valueForKeyPath: @"@unionOfArrays.self"] sortedArrayUsingDescriptors:@[asc]];
@@ -105,6 +107,9 @@
                         category = cat;
                     }
                 }
+                // !!! Add uniq check and check if there actually are any unanswered questions to avoid inifinite loop !!!
+                // only add unasnwered questions to allquestions?
+                //
                 // Coded random this way instead of random category then random question inside it so every question has the same chance to appear not being dependent on number of question in category.
                 NSString *answer = @"";
                 while (![self happyCheck:answer]) { // sub - input answer, chech if user happy
@@ -113,7 +118,7 @@
                 }
                 answers[currentUser][category][question] = answer;
                 [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
-                NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.85!");
+                NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!");
             }
         
         
@@ -155,14 +160,41 @@
             }
         
         
-        } else if ([menuOption isEqualToString:@"3"]) { // reading other's answers
+        } else if ([menuOption isEqualToString:@"3"]) { // main - reading other's answers
+            NSString *people = [self arrayToFormattedString:personsInAnswers]; // lists persons
+            NSLog(@"\n\nPlease choose a person to see his/her answers.\n\nCurrent list of people:\n%@\n\nType a person's number and press return to continue.", people);
+            NSString *personNumber = [self requestKeyboardInput];
+            while ([personNumber integerValue] < 1 || [personNumber integerValue] >= [[answers allKeys] count]) {
+                NSLog(@"\n\nError! No such person exists.\n\nCurrent list of people:\n%@\n\nType a person's number and press return to continue.", people);
+                personNumber = [self requestKeyboardInput];
+            }
+            NSString *person = [[answers allKeys] sortedArrayUsingDescriptors:@[asc]][[personNumber integerValue] - 1];
             
-            NSLog(@"");
-        
-        } else if ([menuOption isEqualToString:@"4"]) { // quits the app
-            NSLog(@"\n\nThank you for using Vault-Tec Interviewer 1980 v0.85!\n\nWe hope you enjoyed it and coming back soon!\n\nIf you have questions or comments feel free to contact us at molotov2k@gmail.com\n\nCheers!\n\n\nP.S.: Beer donations are highly appreciated!");
+            NSString *categories = [self arrayToFormattedString:[answers[person] allKeys]]; // lists categories for person
+            NSLog(@"\n\nPlease choose a category of answers.\n\nCurrent list of categories:\n%@\n\nType category number and press return to continue.", categories);
+            NSString *categoryNumber = [self requestKeyboardInput];
+            while ([categoryNumber integerValue] < 1 || [categoryNumber integerValue] >= [[answers[person] allKeys] count]) {
+                NSLog(@"\n\nError! No such category exists.\n\nCurrent list of categories:\n%@\n\nType category number and press return to continue.", categories);
+                categoryNumber = [self requestKeyboardInput];
+            }
+            NSString *category = [[answers[person] allKeys] sortedArrayUsingDescriptors:@[asc]][[categoryNumber integerValue] - 1];
+            
+            NSString *answeredQuestions = [self arrayToFormattedString:[answers[person][category] allKeys]]; // lists answers for category
+            NSLog(@"Please choose a question to see answer for.\n\nCurrent list of answered questions in this category:\n%@\n\nType question number and press return to continue.", answeredQuestions);
+            NSString *questionNumber = [self requestKeyboardInput];
+            while ([questionNumber integerValue] < 1 || [questionNumber integerValue] >= [[answers[person][category] allKeys] count]) {
+                NSLog(@"\n\nError! No such question exists.\n\nCurrent list of answered questions in this category:\n%@\n\nType question number and press return to continue.", answeredQuestions);
+                questionNumber = [self requestKeyboardInput];
+            }
+            NSString *answeredQuestion = [[answers[person][category] allKeys] sortedArrayUsingDescriptors:@[asc]][[questionNumber integerValue] -1]; // answer
+            NSLog(@"\n\nAnswer for question '%@' is:\n\n%@\n\nType anything and press return to go back to main menu.", answeredQuestion, answers[person][category][answeredQuestion]);
+            [self requestKeyboardInput];
+            
+            
+        } else if ([menuOption isEqualToString:@"4"]) { // main - quits the app
+            NSLog(@"\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!\n\nWe hope you enjoyed it and coming back soon!\n\nIf you have questions or comments feel free to contact us at molotov2k@gmail.com\n\nCheers!\n\n\nP.S.: Beer donations are highly appreciated!");
             stop = YES;
-        } else { // reacts to improper command
+        } else { // main - reacts to improper input
             NSLog(@"\n\nI'm sorry, but I'm from 80's and I can only understand if you enter 1, 2, 3 or 4.\n\nPlease try again.");
         }
     }
