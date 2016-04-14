@@ -76,14 +76,25 @@
             if ([subMenuOption isEqualToString:@"1"]) { // select question category
                 NSLog(@"\n\nYou opted to select question to answer. Please select question category.\n\nCurrent categories are: %@\n\nType in desired category name", numberedCategories);
                 NSString *categoryNumber = [self requestKeyboardInput];
-                NSString *category = questionsCategories[[categoryNumber integerValue] - 1];
-                while (![[questions allKeys] containsObject:category]) {
+                while ([categoryNumber integerValue] < 1 || [categoryNumber integerValue] > [questionsCategories count]) {
                     NSLog(@"\n\nError! No such category exists. Please enter existing category name.\n\nCurrent categories are: %@", numberedCategories);
                     categoryNumber = [self requestKeyboardInput];
-                    category = questionsCategories[[categoryNumber integerValue] - 1];
                 }
-                NSLog(@"\n\nYou selected category %@. Available questions are: %@\n\nType desired option and press return.", category, [self arrayToFormattedString:questions[category]]);
-                
+                NSString *category = questionsCategories[[categoryNumber integerValue] - 1]; // select question itself
+                NSLog(@"\n\nYou selected category %@. Available questions are: \n%@\n\nType desired question number and press return to answer.\n\nType anything else to return to main menu.", category, [self arrayToFormattedString:questions[category]]);
+                NSString *questionNumber = [self requestKeyboardInput];
+                if ([questionNumber integerValue] > 0 || [questionNumber integerValue] < [questions[category] count]) {
+                    questions[category] = [questions[category] sortedArrayUsingDescriptors:@[asc]];
+                    NSString *question = questions[category][[questionNumber integerValue] - 1];
+                    NSString *answer = @"";
+                    while (![self happyCheck:answer]) { // input answer, chech if user happy
+                        NSLog(@"\n\nEnter your answer to question:\n\n%@\n\nPress return to continue.", question);
+                        answer = [self requestKeyboardInput];
+                    }
+                    answers[currentUser][category][question] = answer;
+                    [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
+                    NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.85!");
+                }
             }
         
         
@@ -107,7 +118,6 @@
                 [questions[category] addObject:newQuestion];
                 [NSKeyedArchiver archiveRootObject:questions toFile:savedQuestionsPath];
                 NSLog(@"\n\nQuestion successfully added to category %@!\n\nQuestions in category %@ currently include: %@", [category uppercaseString], [category uppercaseString], [self arrayToFormattedString:questions[category]]);
-                stop = [self stopCheck];
                 
             
             } else { // create new category to create question
@@ -123,7 +133,6 @@
                     [NSKeyedArchiver archiveRootObject:questions toFile:savedQuestionsPath];
                     NSLog(@"\n\nCategory %@ successfully created!\n\nCurrent categories are: %@", [newCategory uppercaseString], [self arrayToFormattedString:[questions allKeys]]);
                 }
-                stop = [self stopCheck];
             }
         
         
