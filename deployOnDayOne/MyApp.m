@@ -78,7 +78,7 @@
             if ([subMenuOption isEqualToString:@"1"]) { // sub - select question to answer
                 NSLog(@"\n\nYou opted to select question to answer. Please select question category.\n\nCurrent categories are: %@\n\nType in desired category name", numberedCategories);
                 NSString *categoryNumber = [self requestKeyboardInput];
-                while ([categoryNumber integerValue] < 1 || [categoryNumber integerValue] >= [questionsCategories count]) {
+                while ([categoryNumber integerValue] < 1 || [categoryNumber integerValue] > [questionsCategories count]) {
                     NSLog(@"\n\nError! No such category exists. Please enter existing category name.\n\nCurrent categories are: %@", numberedCategories);
                     categoryNumber = [self requestKeyboardInput];
                 }
@@ -93,7 +93,7 @@
                         NSLog(@"\n\nEnter your answer to question:\n\n%@\n\nPress return to continue.", question);
                         answer = [self requestKeyboardInput];
                     }
-                    answers[currentUser][category][question] = answer;
+                    answers[currentUser][category][question] = [answer mutableCopy];
                     [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
                     NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!");
                 }
@@ -116,7 +116,7 @@
                     NSLog(@"\n\nEnter your answer to question:\n\n%@\n\nPress return to continue.", question);
                     answer = [self requestKeyboardInput];
                 }
-                answers[currentUser][category][question] = answer;
+                answers[currentUser][category][question] = [answer mutableCopy];
                 [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
                 NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!");
             }
@@ -164,7 +164,7 @@
             NSString *people = [self arrayToFormattedString:personsInAnswers]; // lists persons
             NSLog(@"\n\nPlease choose a person to see his/her answers.\n\nCurrent list of people:\n%@\n\nType a person's number and press return to continue.", people);
             NSString *personNumber = [self requestKeyboardInput];
-            while ([personNumber integerValue] < 1 || [personNumber integerValue] >= [[answers allKeys] count]) {
+            while ([personNumber integerValue] < 1 || [personNumber integerValue] > [[answers allKeys] count]) {
                 NSLog(@"\n\nError! No such person exists.\n\nCurrent list of people:\n%@\n\nType a person's number and press return to continue.", people);
                 personNumber = [self requestKeyboardInput];
             }
@@ -173,7 +173,7 @@
             NSString *categories = [self arrayToFormattedString:[answers[person] allKeys]]; // lists categories for person
             NSLog(@"\n\nPlease choose a category of answers.\n\nCurrent list of categories:\n%@\n\nType category number and press return to continue.", categories);
             NSString *categoryNumber = [self requestKeyboardInput];
-            while ([categoryNumber integerValue] < 1 || [categoryNumber integerValue] >= [[answers[person] allKeys] count]) {
+            while ([categoryNumber integerValue] < 1 || [categoryNumber integerValue] > [[answers[person] allKeys] count]) {
                 NSLog(@"\n\nError! No such category exists.\n\nCurrent list of categories:\n%@\n\nType category number and press return to continue.", categories);
                 categoryNumber = [self requestKeyboardInput];
             }
@@ -182,7 +182,7 @@
             NSString *answeredQuestions = [self arrayToFormattedString:[answers[person][category] allKeys]]; // lists answers for category
             NSLog(@"Please choose a question to see answer for.\n\nCurrent list of answered questions in this category:\n%@\n\nType question number and press return to continue.", answeredQuestions);
             NSString *questionNumber = [self requestKeyboardInput];
-            while ([questionNumber integerValue] < 1 || [questionNumber integerValue] >= [[answers[person][category] allKeys] count]) {
+            while ([questionNumber integerValue] < 1 || [questionNumber integerValue] > [[answers[person][category] allKeys] count]) {
                 NSLog(@"\n\nError! No such question exists.\n\nCurrent list of answered questions in this category:\n%@\n\nType question number and press return to continue.", answeredQuestions);
                 questionNumber = [self requestKeyboardInput];
             }
