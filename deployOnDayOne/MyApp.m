@@ -6,6 +6,15 @@
 //  Copyright (c) 2015 Zachary Drossman. All rights reserved.
 //
 
+
+
+// Things to do:
+// - remove group, use answers[currentUser] instead
+// - add admin feature to delete unwanted stuff
+// - rewrite the program using separate methods to make it shorter, more readable and nicer
+// - modify requestUserInput AGAIN so it would cut off backspaces and stuff like that
+// - have a cookie
+
 #import "MyApp.h"
 
 
@@ -93,6 +102,13 @@
                         NSLog(@"\n\nEnter your answer to question:\n\n%@\n\nPress return to continue.", question);
                         answer = [self requestKeyboardInput];
                     }
+                    if (![[answers allKeys] containsObject:currentUser]) {
+                        answers[currentUser] = [[NSMutableDictionary alloc] init];
+                    } else {
+                        if (![[answers[currentUser] allKeys] containsObject:category]) {
+                            answers[currentUser][category] = [[NSMutableDictionary alloc] init];
+                        }
+                    }
                     answers[currentUser][category][question] = [answer mutableCopy];
                     [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
                     NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!");
@@ -106,14 +122,15 @@
                         }
                     } else {
                         for (NSString *quest in questions[cat]) {
-                            if (![answers[currentUser][cat] containsObject:quest]) {
+                            if (![[answers[currentUser][cat] allKeys] containsObject:quest]) {
                                 [unansweredQuestions addObject:quest];
                             }
                         }
                     }
                 }
                 if ([unansweredQuestions count] == 0) {
-                    NSLog(@"\n\nIt appears that you have already answered all available questions.\n\nTry adding a new question and answering it or wait till somebody else adds one.\n\nGood job answering questions!");
+                    NSLog(@"\n\nIt appears that you have already answered all available questions.\n\nTry adding a new question and answering it or wait till somebody else adds one.\n\nGood job!\n\nPress return to go back to main menu.");
+                    [self requestKeyboardInput];
                 } else {
                     NSUInteger randomizer = arc4random() % [unansweredQuestions count];
                     NSString *question = unansweredQuestions[randomizer];
@@ -129,7 +146,16 @@
                         NSLog(@"\n\nEnter your answer to question:\n\n%@\n\nPress return to continue.", question);
                         answer = [self requestKeyboardInput];
                     }
+                    
+                    if (![[answers allKeys] containsObject:currentUser]) {
+                        answers[currentUser] = [[NSMutableDictionary alloc] init];
+                    } else {
+                        if (![[answers[currentUser] allKeys] containsObject:category]) {
+                            answers[currentUser][category] = [[NSMutableDictionary alloc] init];
+                        }
+                    }
                     answers[currentUser][category][question] = [answer mutableCopy];
+                    NSLog(@"--- answers: %@", answers);
                     [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
                     NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!");
                     }
