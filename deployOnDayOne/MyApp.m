@@ -98,28 +98,42 @@
                     NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!");
                 }
             } else if ([subMenuOption isEqualToString:@"2"]) { // sub - answer random question
-                NSArray *allQuestions = [[[questions allValues] valueForKeyPath: @"@unionOfArrays.self"] sortedArrayUsingDescriptors:@[asc]];
-                NSUInteger randomizer = arc4random() % [allQuestions count];
-                NSString *question = allQuestions[randomizer];
-                NSString *category = @"";
-                for (NSString *cat in [questions allKeys]) {
-                    if ([questions[cat] containsObject:question]) {
-                        category = cat;
+                NSMutableArray *unansweredQuestions = [[NSMutableArray alloc] init];
+                for (NSString *cat in questions) {
+                    if (![[answers[currentUser] allKeys] containsObject:cat]) {
+                        for (NSString *quest in questions[cat]) {
+                            [unansweredQuestions addObject:quest];
+                        }
+                    } else {
+                        for (NSString *quest in questions[cat]) {
+                            if (![answers[currentUser][cat] containsObject:quest]) {
+                                [unansweredQuestions addObject:quest];
+                            }
+                        }
                     }
                 }
-                // !!! Add uniq check and check if there actually are any unanswered questions to avoid inifinite loop !!!
-                // only add unasnwered questions to allquestions?
-                //
-                // Coded random this way instead of random category then random question inside it so every question has the same chance to appear not being dependent on number of question in category.
-                NSString *answer = @"";
-                while (![self happyCheck:answer]) { // sub - input answer, chech if user happy
-                    NSLog(@"\n\nEnter your answer to question:\n\n%@\n\nPress return to continue.", question);
-                    answer = [self requestKeyboardInput];
+                if ([unansweredQuestions count] == 0) {
+                    NSLog(@"\n\nIt appears that you have already answered all available questions.\n\nTry adding a new question and answering it or wait till somebody else adds one.\n\nGood job answering questions!");
+                } else {
+                    NSUInteger randomizer = arc4random() % [unansweredQuestions count];
+                    NSString *question = unansweredQuestions[randomizer];
+                    NSString *category = @"";
+                    for (NSString *cat in [questions allKeys]) {
+                        if ([questions[cat] containsObject:question]) {
+                            category = cat;
+                        }
+                    }
+                    // Coded random this way instead of random category then random question inside it so every question has the same chance to appear not being dependent on number of question in category.
+                    NSString *answer = @"";
+                    while (![self happyCheck:answer]) { // sub - input answer, chech if user happy
+                        NSLog(@"\n\nEnter your answer to question:\n\n%@\n\nPress return to continue.", question);
+                        answer = [self requestKeyboardInput];
+                    }
+                    answers[currentUser][category][question] = [answer mutableCopy];
+                    [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
+                    NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!");
+                    }
                 }
-                answers[currentUser][category][question] = [answer mutableCopy];
-                [NSKeyedArchiver archiveRootObject:answers toFile:savedAnswersPath];
-                NSLog(@"\n\nYour answer successfully saved!\n\nThank you for using Vault-Tec Interviewer 1980 v0.88!");
-            }
         
         
         } else if ([menuOption isEqualToString:@"2"]) { // main category - create new questions
@@ -205,6 +219,7 @@
 // You shouldn't have any need to modify (or really understand) this method.
 -(NSString *)requestKeyboardInput
 {
+    fpurge(stdin);
     char stringBuffer[4096] = { 0 };  // Technically there should be some safety on this to avoid a crash if you write too much.
     scanf("%[^\n]%*c", stringBuffer);
     return [NSString stringWithUTF8String:stringBuffer];
@@ -253,7 +268,7 @@
 }
 
 
--(BOOL)stopCheck {
+-(BOOL)stopCheck { // not using it anymore, but let be here until final version just in case
     NSLog(@"\n\nType 1 to return to main menu.\nType anything else to quit app.");
     NSString *option = [self requestKeyboardInput];
     if ([option isEqualToString:@"1"]) {
@@ -264,7 +279,7 @@
 }
 
 
--(NSString *)arrayToFormattedString:(NSArray *)array {
+-(NSString *)arrayToFormattedString:(NSArray *)array { // used to created numbered string to list categories, names, what have you
     NSMutableString *formattedOutput = [[NSMutableString alloc] init];
     NSSortDescriptor *ascend = [NSSortDescriptor sortDescriptorWithKey:nil ascending:YES];
     array = [array sortedArrayUsingDescriptors:@[ascend]];
