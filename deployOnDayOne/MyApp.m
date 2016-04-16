@@ -9,11 +9,10 @@
 
 
 // Things to do:
-// - remove group, use answers[currentUser] instead
-// - add admin feature to delete unwanted stuff
-// - rewrite the program using separate methods to make it shorter, more readable and nicer
-// - modify requestUserInput AGAIN so it would cut off backspaces and stuff like that
-// - have a cookie
+// - make path dynamic
+// - make requestKeybordInput method to remove backspaces
+// - no magic strings for user input?
+
 
 #import "MyApp.h"
 
@@ -27,20 +26,35 @@
 
 -(void)execute
 {
-    // Defining "global" variables
-    NSSortDescriptor *asc = [NSSortDescriptor sortDescriptorWithKey:nil ascending:YES];
-    BOOL stop = NO;
+
     
-    
-    // Loading students, questions and answers data
-    NSString *savedGroupPath = [NSHomeDirectory() stringByAppendingPathComponent:@"/Development/code/ios-DeployOnDayOne/group.dat"]; // Not perfect, but I don't know how to return directory with lab, working directory is not it
-    NSArray *savedGroup = @[];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:savedGroupPath]) {
-        NSData *groupData = [NSData dataWithContentsOfFile:savedGroupPath];
-        savedGroup = [NSKeyedUnarchiver unarchiveObjectWithData:groupData];
+    //   ---   Loading saved AppData   ---
+    NSString *savedAppDataPath = [NSHomeDirectory() stringByAppendingPathComponent:@"/Development/code/ios-DeployOnDayOne/appData.dat"]; // need to make path dynamic, but I want file inside lab folder, not in working directory
+    NSDictionary *savedAppData = @{};
+    if ([[NSFileManager defaultManager] fileExistsAtPath:savedAppDataPath]) {
+        NSData *appDataData = [NSData dataWithContentsOfFile:savedAppDataPath];
+        savedAppData = [NSKeyedUnarchiver unarchiveObjectWithData:appDataData];
     }
-    NSMutableArray *group = [savedGroup mutableCopy];
+    NSMutableDictionary *appData = [savedAppData mutableCopy];
     
+    
+    //   --- Login   ---
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /*
+    // Loading students, questions and answers data
     NSString *savedQuestionsPath = [NSHomeDirectory() stringByAppendingPathComponent:@"/Development/code/ios-DeployOnDayOne/questions.dat"];
     NSDictionary *savedQuestions = @{};
     if ([[NSFileManager defaultManager] fileExistsAtPath:savedQuestionsPath]) {
@@ -237,22 +251,98 @@
         } else { // main - reacts to improper input
             NSLog(@"\n\nI'm sorry, but I'm from 80's and I can only understand if you enter 1, 2, 3 or 4.\n\nPlease try again.");
         }
-    }
+    } */
 }
 
 
-// This method will read a line of text from the console and return it as an NSString instance.
-// You shouldn't have any need to modify (or really understand) this method.
--(NSString *)requestKeyboardInput
-{
-    fpurge(stdin);
-    char stringBuffer[4096] = { 0 };  // Technically there should be some safety on this to avoid a crash if you write too much.
+//   ---   METHOD DECLARATIONS   ---
+
+
+// requests, takes and returns user input
+-(NSString *)requestKeyboardInput {
+    fpurge(stdin); // otherwise goes into inifinite loop if you press return without inputing anything
+    char stringBuffer[4096] = { 0 };  // technically there should be some safety on this to avoid a crash if you write too much
     scanf("%[^\n]%*c", stringBuffer);
     return [NSString stringWithUTF8String:stringBuffer];
 }
 
 
--(BOOL)loginCheck:(NSString *)login inGroup:(NSMutableArray *)group { // handles name is not in group cases
+// sorts given array ascending
+-(NSArray *)arrayToSortedArrayAscending:(NSArray *)array {
+    NSSortDescriptor *ascending = [NSSortDescriptor sortDescriptorWithKey:nil ascending:YES];
+    return [array sortedArrayUsingDescriptors:@[ascending]];
+}
+
+
+// creates a string with list of sorted and numbered categories of array from which you can make a selection using category number
+-(NSString *)arrayToNumberedString:(NSArray *)array {
+    NSMutableString *formattedOutput = [[NSMutableString alloc] init];
+    array = [self arrayToSortedArrayAscending:array];
+    for (NSUInteger i = 0; i < [array count]; i++) {
+        [formattedOutput appendFormat:@"\n%lu. %@", i + 1, array[i]];
+    }
+    [formattedOutput appendFormat:@"\n0. Go Back"];
+    return formattedOutput;
+}
+
+
+// returns user's selection of the category from given category list of given name
+-(NSString *)categorySelection:(NSArray *)categoryList categoryName:(NSString *)categoryListName {
+    NSString *categories = [self arrayToNumberedString:categoryList];
+    NSString *userSelection = @"";
+    NSUInteger userSelectionIntegerValue = [userSelection integerValue];
+    while (!((userSelectionIntegerValue > 0 && userSelectionIntegerValue < [categoryList count]) || [userSelection isEqualToString:@"0"])) {
+        NSLog(@"\n\nOptions in category %@ are:\n%@\n\nPlease type corresponding number and press return to make a selection.", categoryListName, categories);
+        userSelection = [self requestKeyboardInput];
+        userSelectionIntegerValue = [userSelection integerValue];
+    }
+    
+    if (userSelectionIntegerValue == 0) {
+        return @"back";
+    } else {
+        return [self arrayToSortedArrayAscending:categoryList][userSelectionIntegerValue - 1];
+    }
+}
+
+
+// returns user's input and checks if user is happy with it when non numbered inpur is required
+- (NSString *)userInput:(NSString *)userResponseTo inputType:(NSString *)type {
+    NSString *promptText = @"";
+    if ([type isEqualToString:@"answer"]) { // can be probably redone withough magic strings
+        promptText = [promptText stringByAppendingFormat:@"your answer to question:\n\n%@", userResponseTo];
+    } else if ([type isEqualToString:@"category"]) {
+        promptText = [promptText stringByAppendingFormat:@"new category name."];
+    } else if ([type isEqualToString:@"question"]) {
+        promptText = [promptText stringByAppendingFormat:@"new question for category:\n\n%@", userResponseTo];
+    } else {
+        promptText = [promptText stringByAppendingFormat:@"your response."];
+    }
+    
+    BOOL happy = NO;
+    NSString *userResponse = @"";
+    while (!happy) {
+        NSLog(@"\n\nPlease enter %@\n\nPress return when finished.\nEnter '0' or 'back' and press return to go back.", promptText);
+        userResponse = [self requestKeyboardInput];
+        if ([userResponse isEqualToString:@"0"] || [userResponse isEqualToString:@"back"]) {
+            return @"back";
+        }
+        NSString *userHappy = @"";
+        while (!([userHappy isEqualToString:@"1"] || [userHappy isEqualToString:@"0"])) {
+            NSLog(@"userHappy: %@", userHappy);
+            NSLog(@"\n\nYou entered:\n\n< %@ >\n\n1. Looks good!\n0. Go Back\n\nPlease enter desired option number and press return.", userResponse);
+            userHappy = [self requestKeyboardInput];
+        }
+        if ([userHappy isEqualToString:@"1"]) {
+            return userResponse;
+        }
+    }
+    return @"something is very wrong!"; //xcode will throw error if there is nothing here
+}
+
+
+
+
+/* -(BOOL)loginCheck:(NSString *)login inGroup:(NSMutableArray *)group { // handles name is not in group cases
     if ([group containsObject:login]) {
         return YES;
     } else {
@@ -302,18 +392,7 @@
     }
     NSLog(@"\n\nThank you for using this app!\n\nWe hope you enjoyed it and coming back soon!\n\nIf you have questions or comments feel free to contact us at molotov2k@gmail.com\n\nCheers!\n\n\nP.S.: Beer donations are highly appreciated!");
     return YES;
-}
-
-
--(NSString *)arrayToFormattedString:(NSArray *)array { // used to created numbered string to list categories, names, what have you
-    NSMutableString *formattedOutput = [[NSMutableString alloc] init];
-    NSSortDescriptor *ascend = [NSSortDescriptor sortDescriptorWithKey:nil ascending:YES];
-    array = [array sortedArrayUsingDescriptors:@[ascend]];
-    for (NSUInteger i = 0; i < [array count]; i++) {
-        [formattedOutput appendFormat:@"\n%lu. %@", i + 1, array[i]];
-    }
-    return formattedOutput;
-}
+} */
 
 
 @end

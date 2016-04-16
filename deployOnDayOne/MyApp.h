@@ -17,12 +17,12 @@
 
 -(NSString *)requestKeyboardInput;
 
--(BOOL)loginCheck:(NSString *)login inGroup:(NSMutableArray *)group;
+-(NSString *)arrayToNumberedString:(NSArray *)array;
 
--(BOOL)happyCheck:(NSString *)name;
+-(NSArray *)arrayToSortedArrayAscending:(NSArray *)array;
 
--(BOOL)stopCheck;
+-(NSString *)categorySelection:(NSArray *)categoryList categoryName:(NSString *)categoryName;
 
--(NSString *)arrayToFormattedString:(NSArray *)array;
+-(NSString *)userInput:(NSString *)userResponseTo inputType:(NSString *)type;
 
 @end
