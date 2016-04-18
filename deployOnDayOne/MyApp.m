@@ -12,6 +12,9 @@
 // - make path dynamic
 // - make requestKeybordInput method to remove backspaces
 // - no magic strings for user input?
+// - admin login with ability to delete stuff
+// - questions show user who submitted them
+// - questions show if answered already or not, shows answers, prompt to update or go back
 
 
 #import "MyApp.h"
@@ -28,28 +31,109 @@
 {
 
     
-    //   ---   Loading saved AppData   ---
+    //   ---   LOADING SAVED APPDATA   ---
     NSString *savedAppDataPath = [NSHomeDirectory() stringByAppendingPathComponent:@"/Development/code/ios-DeployOnDayOne/appData.dat"]; // need to make path dynamic, but I want file inside lab folder, not in working directory
     NSDictionary *savedAppData = @{};
     if ([[NSFileManager defaultManager] fileExistsAtPath:savedAppDataPath]) {
         NSData *appDataData = [NSData dataWithContentsOfFile:savedAppDataPath];
         savedAppData = [NSKeyedUnarchiver unarchiveObjectWithData:appDataData];
     }
+    
+    
+    // --- INITIALIZES CURRENT APPDATA ---
     NSMutableDictionary *appData = [savedAppData mutableCopy];
+    if (!appData[@"questions"]) {
+        appData[@"questions"] = [[NSMutableDictionary alloc] init];
+    }
+    
+    if (!appData[@"answers"]) {
+        appData[@"answers"] = [[NSMutableDictionary alloc] init];
+    }
+    
+    if (!appData[@"path"]) {
+        appData[@"path"] = savedAppDataPath;
+    }
+    
+    if (!appData[@"menu"]) {
+        appData[@"menu"] = @{
+                             @"answer a question" : @[@"answer question from category", @"answer random question"],
+                             @"create new question" : @[@"create new question for existing category", @"create new category"],
+                             @"read answers" : [appData[@"answers"] allKeys]
+                             };
+    }
     
     
-    //   --- Login   ---
+    //   --- MAIN BODY   ---
+    NSString *state = @"start";
+    NSString *user = @"";
+    NSLog(@"AppData: %@", appData);
+    
+    while (YES) {
+        if ([state isEqualToString:@"exit"]) {
+            NSLog(@"\n\nThank you for using Vault-Tec Interviewer 1981!\n\n\n\nBrought to you by Max Tkach.\n\ne-mail: molotov2k@gmail.com\ngithub: https://github.com/molotov2k\nlinkedin: https://www.linkedin.com/in/molotov2k\nfacebook: https://www.facebook.com/molotov2k");
+            return;
+            
+        } else if ([state isEqualToString:@"start"]) {
+            state = [self startingScreen];
+            
+        } else if ([state isEqualToString:@"login"]) {
+            NSArray *methodOutput = [self loginScreen:appData];
+            state = methodOutput[0];
+            user = methodOutput[1];
+            
+        } else if ([state isEqualToString:@"main menu"]) {
+            state = [self categorySelection:[appData[@"menu"] allKeys] categoryName:@"main menu"];
+            if ([state isEqualToString:@"back"]) {
+                state = @"start";
+            }
+            
+        } else if ([state isEqualToString:@"answer a question"]) {
+            state = [self categorySelection:appData[@"menu"][@"answer a question"] categoryName:@"answer a question"];
+            if ([state isEqualToString:@"back"]) {
+                state = @"main menu";
+            }
+            
+        } else if ([state isEqualToString:@"answer a question from category"]) {
+            state = [self categorySelection:[appData[@"questions"] allKeys] categoryName:@"question categories"];
+            if ([state isEqualToString:@"back"]) {
+                state = @"answer a question";
+            }
+            
+            
+        } else if ([state isEqualToString:@"something"]) {
+            state = @"something";
+        }
+    }
     
     
     
     
+    /* NSString *userSelection = @"";
+    while (!([userSelection isEqualToString:@"1"] || [userSelection isEqualToString:@"0"])) {
+        NSLog(@"\n\nWelcome to Vault-Tec Interviewer 1981!\n\nAvailable options:\n\n1. Log in\n0. Exit\n\nEnter your selection and press return to continue.");
+        userSelection = [self requestKeyboardInput];
+    }
+    if ([userSelection isEqualToString:@"0"]) {
+        NSLog(@"\n\nThank you for using Vault-Tec Interviewer 1981!\n\n\n\nBrought to you by Max Tkach.\n\ne-mail: molotov2k@gmail.com\ngithub: https://github.com/molotov2k\nlinkedin: https://www.linkedin.com/in/molotov2k\nfacebook: https://www.facebook.com/molotov2k");
+        return;
+    }
     
-    
-    
-    
-    
-    
-    
+    NSLog(@"\n\nPlease enter your name:");
+    NSString *userName = [[self requestKeyboardInput] capitalizedString];
+    if (!appData[@"answers"][userName]) {
+        NSString *userSelection = @"";
+        while (!([userSelection isEqualToString:@"1"] || [userSelection isEqualToString:@"0"])) {
+            NSLog(@"\n\nYou entered %@.\nUnfortunately this name was not found.\n\nAvailable options:\n\n1. Create a new account\n0. Go Back\n\nEnter your selection and press return to continue.", [userName uppercaseString]);
+            userSelection = [self requestKeyboardInput];
+        }
+        if ([userSelection isEqualToString:@"1"]) {
+            appData[@"answers"][userName] = [[NSMutableDictionary alloc] init];
+            [NSKeyedArchiver archiveRootObject:appData toFile:savedAppDataPath];
+            NSLog(@"\n\nAccount created successfully!");
+        }
+    }
+    NSLog(@"\n\nWelcome %@!", [userName capitalizedString]); */
+        
     
     
     
@@ -263,7 +347,7 @@
     fpurge(stdin); // otherwise goes into inifinite loop if you press return without inputing anything
     char stringBuffer[4096] = { 0 };  // technically there should be some safety on this to avoid a crash if you write too much
     scanf("%[^\n]%*c", stringBuffer);
-    return [NSString stringWithUTF8String:stringBuffer];
+    return [[NSString stringWithUTF8String:stringBuffer] lowercaseString];
 }
 
 
@@ -290,17 +374,14 @@
 -(NSString *)categorySelection:(NSArray *)categoryList categoryName:(NSString *)categoryListName {
     NSString *categories = [self arrayToNumberedString:categoryList];
     NSString *userSelection = @"";
-    NSUInteger userSelectionIntegerValue = [userSelection integerValue];
-    while (!((userSelectionIntegerValue > 0 && userSelectionIntegerValue < [categoryList count]) || [userSelection isEqualToString:@"0"])) {
+    while (!(([userSelection integerValue] > 0 && [userSelection integerValue] < [categoryList count]) || [userSelection isEqualToString:@"0"])) {
         NSLog(@"\n\nOptions in category %@ are:\n%@\n\nPlease type corresponding number and press return to make a selection.", categoryListName, categories);
         userSelection = [self requestKeyboardInput];
-        userSelectionIntegerValue = [userSelection integerValue];
     }
-    
-    if (userSelectionIntegerValue == 0) {
+    if ([userSelection integerValue] == 0) {
         return @"back";
     } else {
-        return [self arrayToSortedArrayAscending:categoryList][userSelectionIntegerValue - 1];
+        return [self arrayToSortedArrayAscending:categoryList][[userSelection integerValue] - 1];
     }
 }
 
@@ -314,8 +395,10 @@
         promptText = [promptText stringByAppendingFormat:@"new category name."];
     } else if ([type isEqualToString:@"question"]) {
         promptText = [promptText stringByAppendingFormat:@"new question for category:\n\n%@", userResponseTo];
+    //} else if ([type isEqualToString:@"main"]) {
+    //     promptText = [promptText stringByAppendingFormat:@"your name."];
     } else {
-        promptText = [promptText stringByAppendingFormat:@"your response."];
+        promptText = [promptText stringByAppendingFormat:@"your selection."];
     }
     
     BOOL happy = NO;
@@ -338,6 +421,48 @@
     }
     return @"something is very wrong!"; //xcode will throw error if there is nothing here
 }
+
+
+// starting screen
+-(NSString *)startingScreen {
+    NSString *userSelection = @"";
+    while (!([userSelection isEqualToString:@"1"] || [userSelection isEqualToString:@"0"])) {
+        NSLog(@"\n\nWelcome to Vault-Tec Interviewer 1981!\n\nAvailable options:\n\n1. Log in\n0. Exit\n\nEnter your selection and press return to continue.");
+        userSelection = [self requestKeyboardInput];
+    }
+    if ([userSelection isEqualToString:@"0"]) {
+        return @"exit";
+    }
+    return @"login";
+}
+
+
+// login screen, returns array with menu selection and user's name
+-(NSArray *)loginScreen:(NSMutableDictionary *)appData {
+    NSLog(@"\n\nPlease enter your name:");
+    NSString *userName = [[self requestKeyboardInput] capitalizedString];
+    if (!appData[@"answers"][userName]) {
+        NSString *userSelection = @"";
+        while (!([userSelection isEqualToString:@"1"] || [userSelection isEqualToString:@"0"])) {
+            NSLog(@"\n\nYou entered %@.\nUnfortunately this name was not found.\n\nAvailable options:\n\n1. Create a new account\n0. Go Back\n\nEnter your selection and press return to continue.", [userName uppercaseString]);
+            userSelection = [self requestKeyboardInput];
+        }
+        if ([userSelection isEqualToString:@"1"]) {
+            appData[@"answers"][userName] = [[NSMutableDictionary alloc] init];
+            [NSKeyedArchiver archiveRootObject:appData toFile:appData[@"path"]];
+            NSLog(@"\n\nAccount created successfully!");
+        } else {
+            return @[@"start", @""];
+        }
+    }
+    NSLog(@"\n\nWelcome, %@!", userName);
+    return @[@"main menu", userName];
+}
+
+
+
+
+
 
 
 

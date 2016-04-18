@@ -11,8 +11,6 @@
 
 @interface MyApp : NSObject
 
-@property (strong, nonatomic) NSString *currentUser;
-
 -(void)execute;
 
 -(NSString *)requestKeyboardInput;
@@ -24,5 +22,9 @@
 -(NSString *)categorySelection:(NSArray *)categoryList categoryName:(NSString *)categoryName;
 
 -(NSString *)userInput:(NSString *)userResponseTo inputType:(NSString *)type;
+
+-(NSString *)startingScreen;
+
+-(NSArray *)loginScreen:(NSDictionary *)appData;
 
 @end
