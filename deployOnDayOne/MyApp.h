@@ -27,4 +27,8 @@
 
 -(NSArray *)loginScreen:(NSDictionary *)appData;
 
+-(void)save:(NSString *)input inObj:(NSDictionary *)appData user:(NSString *)user category:(NSString *)category question:(NSString *)question;
+
+-(NSArray *)randomQuestion:(NSDictionary *)appData user:(NSString *)user;
+
 @end
